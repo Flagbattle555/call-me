@@ -48,8 +48,9 @@ section{padding:36px 0}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ad slots */
-.ad{margin:26px auto 0;display:flex;justify-content:center;align-items:center;min-height:60px;max-width:100%;overflow:hidden;
-  border:1px dashed rgba(255,255,255,.18);border-radius:14px;color:var(--muted);font-size:.8rem;background:rgba(255,255,255,.03)}
+.ad{margin:26px 0 0;display:flex;justify-content:center;align-items:center;min-height:60px;overflow:hidden;
+  position:relative;left:50%;transform:translateX(-50%);width:min(728px,calc(100vw - 24px));
+  border-radius:14px;color:var(--muted);font-size:.8rem}
 
 /* tasks */
 h2{font-size:1.5rem;text-align:center;margin-bottom:6px}
@@ -112,10 +113,8 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--sun);outline-offset
     <!-- ✏️ EDIT 2: PUT YOUR OWN IMAGE HERE (change the src, e.g. "me.jpg" or a full image URL) -->
     <div class="avatar"><div class="avatar-inner"><img src="https://i.ibb.co.com/rG6jGNyK/c5130508-0a7e-4509-b7a6-74da93625390.jpg" alt="My photo"></div></div>
 
-    <!-- ✏️ EDIT 3: ADSTERRA BANNER #1 (top). Paste your Adsterra banner code INSIDE this div, replacing the text -->
-    <div class="ad" id="ad-top">
-      Adsterra banner here
-    </div>
+    <!-- ✏️ EDIT 3: ADSTERRA BANNER #1 (top). Loaded automatically by the AD SETTINGS in the script below -->
+    <div class="ad" id="ad-top"></div>
   </section>
 
   <!-- ===== TASKS ===== -->
@@ -143,8 +142,8 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--sun);outline-offset
 
   <!-- ===== BANNER #2 ===== -->
   <section class="reveal">
-    <!-- ✏️ EDIT 4: ADSTERRA BANNER #2 (bottom). Paste your Adsterra banner code INSIDE this div -->
-    <div class="ad" id="ad-bottom" style="min-height:250px">
+    <!-- ✏️ EDIT 4: ADSTERRA BANNER #2 (bottom). Loaded automatically by the AD SETTINGS in the script below -->
+    <div class="ad" id="ad-bottom">
       Adsterra banner here
     </div>
   </section>
@@ -158,7 +157,7 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--sun);outline-offset
     <h3>All tasks done 🎉</h3>
     <p>Great job! Tap below to start the video call.</p>
     <!-- ✏️ EDIT 5: VIDEO CALL LINK (change href, e.g. WhatsApp / Telegram / Meet link) -->
-    <a class="call" href="https://example.com/video-call" target="_blank" rel="noopener">
+    <a class="call" href="https://auctionr.org/4/bcb44f7e708339ae449e184ca5385cef" target="_blank" rel="noopener">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 8v8H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h10zm1 2.5 5-3v9l-5-3v-3z"/></svg>
       Start Video Call
     </a><br>
@@ -170,9 +169,9 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--sun);outline-offset
 /* ============ SETTINGS ============ */
 // ✏️ EDIT 6: TASK LINKS — the page opens the matching link when a task is clicked
 const TASK_LINKS = [
-  "https://example.com/task-1",   // Task 1 link
-  "https://example.com/task-2",   // Task 2 link
-  "https://example.com/task-3"    // Task 3 link
+  "https://auctionr.org/4/bcb44f7e708339ae449e184ca5385cef",   // Task 1 link
+  "https://auctionr.org/4/bcb44f7e708339ae449e184ca5385cef",   // Task 2 link
+  "https://auctionr.org/4/bcb44f7e708339ae449e184ca5385cef"    // Task 3 link
 ];
 const WAIT_SECONDS = 15;          // time the user must wait for a task to count as done
 /* ================================== */
@@ -206,6 +205,23 @@ tasks.forEach((btn, i) => {
 });
 
 document.getElementById('closeBtn').onclick = () => document.getElementById('popup').classList.remove('open');
+
+/* ============ ADSTERRA BANNERS (responsive) ============ */
+// ✏️ EDIT 3/4: your Adsterra units. Desktop/tablet gets 728x90, phones get 320x50.
+const AD_DESKTOP = { key: '55dbc30ce0214a28474f8c2f66d02388', w: 728, h: 90 };
+const AD_MOBILE  = { key: '76e5c4b365c80412091683e194093c7b', w: 320, h: 50 };
+
+function loadAd(containerId, ad) {
+  const f = document.createElement('iframe');
+  f.width = ad.w; f.height = ad.h; f.scrolling = 'no';
+  f.style.cssText = 'border:0;max-width:100%;display:block';
+  f.srcdoc = '<body style="margin:0"><script>atOptions={"key":"' + ad.key + '","format":"iframe","height":' + ad.h + ',"width":' + ad.w + ',"params":{}};<\/script>' +
+             '<script src="https://bicea.org/22/' + ad.key + '"><\/script></body>';
+  document.getElementById(containerId).replaceChildren(f);
+}
+const adToUse = innerWidth >= 760 ? AD_DESKTOP : AD_MOBILE;   // pick size by screen width
+loadAd('ad-top', adToUse);       // banner under your photo
+loadAd('ad-bottom', adToUse);    // banner below the tasks
 
 /* scroll effects: reveal, progress bar, parallax blobs */
 const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('show'); io.unobserve(e.target); } }), { threshold: .15 });
