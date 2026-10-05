@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Complete 3 tasks &amp; get a video call</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#150d2b; --bg2:#241347; --violet:#8b5cf6; --aqua:#2ee6c5;
+  --sun:#ffc857; --pink:#ff5d8f; --text:#f4f0ff; --muted:#b9aedc;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Outfit',system-ui,sans-serif;color:var(--text);background:linear-gradient(180deg,var(--bg),var(--bg2) 60%,var(--bg));min-height:100vh;overflow-x:hidden}
+
+/* scroll progress bar */
+#progress{position:fixed;top:0;left:0;height:4px;width:0;background:linear-gradient(90deg,var(--aqua),var(--violet),var(--pink));z-index:50}
+
+/* floating background blobs (parallax on scroll) */
+.blob{position:fixed;border-radius:50%;filter:blur(80px);opacity:.35;z-index:-1;will-change:transform}
+.b1{width:340px;height:340px;background:var(--violet);top:-80px;left:-80px}
+.b2{width:300px;height:300px;background:var(--aqua);top:45%;right:-100px}
+.b3{width:280px;height:280px;background:var(--pink);bottom:-80px;left:20%}
+
+.wrap{max-width:560px;margin:0 auto;padding:28px 18px 60px}
+section{padding:36px 0}
+
+/* reveal on scroll */
+.reveal{opacity:0;transform:translateY(40px) scale(.97);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.2,1)}
+.reveal.show{opacity:1;transform:none}
+
+/* hero */
+.hero{text-align:center;padding-top:30px}
+.name{font-family:'Great Vibes','Brush Script MT',cursive;font-weight:400;font-size:clamp(3.2rem,13vw,5.2rem);line-height:1.1;
+  background:linear-gradient(100deg,var(--sun),var(--pink) 45%,var(--aqua));-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 6px 22px rgba(255,93,143,.35))}
+.tag{color:var(--muted);margin-top:6px;font-size:1.02rem}
+
+.avatar{width:190px;height:190px;margin:30px auto 0;border-radius:50%;padding:5px;
+  background:conic-gradient(from 0deg,var(--aqua),var(--violet),var(--pink),var(--sun),var(--aqua));animation:spin 8s linear infinite;
+  box-shadow:0 0 50px rgba(139,92,246,.5)}
+.avatar-inner{width:100%;height:100%;border-radius:50%;overflow:hidden;background:var(--bg);animation:spin 8s linear infinite reverse}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s}
+.avatar:hover img{transform:scale(1.12)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ad slots */
+.ad{margin:26px auto 0;display:flex;justify-content:center;align-items:center;min-height:60px;max-width:100%;overflow:hidden;
+  border:1px dashed rgba(255,255,255,.18);border-radius:14px;color:var(--muted);font-size:.8rem;background:rgba(255,255,255,.03)}
+
+/* tasks */
+h2{font-size:1.5rem;text-align:center;margin-bottom:6px}
+.sub{color:var(--muted);text-align:center;margin-bottom:22px}
+.tasks{display:flex;flex-direction:column;gap:16px}
+.task{position:relative;display:flex;align-items:center;gap:14px;width:100%;text-align:left;cursor:pointer;
+  padding:18px 20px;border:1px solid rgba(255,255,255,.14);border-radius:18px;color:var(--text);font:inherit;
+  background:linear-gradient(135deg,rgba(139,92,246,.28),rgba(46,230,197,.14));overflow:hidden;
+  transition:transform .3s,box-shadow .3s,border-color .3s;
+  display:none}
+.task.visible{display:flex;animation:pop .6s cubic-bezier(.2,.8,.2,1)}
+@keyframes pop{from{opacity:0;transform:translateY(30px) scale(.95)}to{opacity:1;transform:none}}
+.task::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.25) 50%,transparent 70%);
+  transform:translateX(-120%);transition:transform .7s}
+.task:hover:not(:disabled){transform:translateY(-5px) scale(1.02);border-color:var(--aqua);box-shadow:0 14px 34px rgba(46,230,197,.28)}
+.task:hover:not(:disabled)::before{transform:translateX(120%)}
+.task:disabled{cursor:default}
+.num{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#150d2b;
+  background:linear-gradient(135deg,var(--sun),var(--pink));transition:transform .4s}
+.task:hover:not(:disabled) .num{transform:rotate(360deg)}
+.txt{flex:1}
+.txt b{display:block;font-size:1.05rem}
+.txt small{color:var(--muted)}
+.bar{position:absolute;left:0;bottom:0;height:5px;width:0;background:linear-gradient(90deg,var(--aqua),var(--sun))}
+.task.done{border-color:var(--aqua);background:linear-gradient(135deg,rgba(46,230,197,.3),rgba(46,230,197,.1))}
+.task.done .num{background:var(--aqua)}
+
+/* popup */
+.overlay{position:fixed;inset:0;display:none;place-items:center;padding:20px;background:rgba(10,5,24,.8);backdrop-filter:blur(6px);z-index:100}
+.overlay.open{display:grid}
+.modal{width:100%;max-width:400px;text-align:center;padding:34px 24px;border-radius:26px;border:1px solid rgba(255,255,255,.2);
+  background:linear-gradient(160deg,#2c1a58,#150d2b);box-shadow:0 30px 80px rgba(139,92,246,.5);animation:pop .6s cubic-bezier(.2,.8,.2,1)}
+.modal h3{font-size:1.6rem;margin-bottom:8px}
+.modal p{color:var(--muted);margin-bottom:24px}
+.call{display:inline-flex;align-items:center;gap:12px;padding:16px 30px;border-radius:999px;font:inherit;font-weight:700;font-size:1.1rem;
+  color:#150d2b;text-decoration:none;background:linear-gradient(90deg,var(--aqua),var(--sun));animation:pulse 1.8s infinite;transition:transform .3s}
+.call:hover{transform:scale(1.07) rotate(-1deg)}
+.call svg{width:26px;height:26px}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(46,230,197,.6)}70%{box-shadow:0 0 0 22px rgba(46,230,197,0)}100%{box-shadow:0 0 0 0 rgba(46,230,197,0)}}
+.close{margin-top:18px;background:none;border:none;color:var(--muted);cursor:pointer;font:inherit;transition:color .3s}
+.close:hover{color:var(--text)}
+
+footer{text-align:center;color:var(--muted);font-size:.85rem;padding-bottom:20px}
+button:focus-visible,a:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+
+<div class="wrap">
+
+  <!-- ===== HERO ===== -->
+  <section class="hero reveal">
+    <!-- ✏️ EDIT 1: PUT YOUR NAME HERE -->
+    <h1 class="name">Your Name</h1>
+    <p class="tag">Finish 3 quick tasks and get a video call from me</p>
+
+    <!-- ✏️ EDIT 2: PUT YOUR OWN IMAGE HERE (change the src, e.g. "me.jpg" or a full image URL) -->
+    <div class="avatar"><div class="avatar-inner"><img src="blob:https://mega.nz/c5130508-0a7e-4509-b7a6-74da93625390" alt="My photo"></div></div>
+
+    <!-- ✏️ EDIT 3: ADSTERRA BANNER #1 (top). Paste your Adsterra banner code INSIDE this div, replacing the text -->
+    <div class="ad" id="ad-top">
+      Adsterra banner here
+    </div>
+  </section>
+
+  <!-- ===== TASKS ===== -->
+  <section class="reveal">
+    <h2>Your 3 tasks</h2>
+    <p class="sub">Tap a task, then wait 15 seconds on this page</p>
+    <div class="tasks">
+      <button class="task visible" data-link="TASK1">
+        <span class="num">1</span>
+        <span class="txt"><b>Task 1</b><small>Click and wait 15 seconds</small></span>
+        <span class="bar"></span>
+      </button>
+      <button class="task" data-link="TASK2">
+        <span class="num">2</span>
+        <span class="txt"><b>Task 2</b><small>Click and wait 15 seconds</small></span>
+        <span class="bar"></span>
+      </button>
+      <button class="task" data-link="TASK3">
+        <span class="num">3</span>
+        <span class="txt"><b>Task 3</b><small>Click and wait 15 seconds</small></span>
+        <span class="bar"></span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ===== BANNER #2 ===== -->
+  <section class="reveal">
+    <!-- ✏️ EDIT 4: ADSTERRA BANNER #2 (bottom). Paste your Adsterra banner code INSIDE this div -->
+    <div class="ad" id="ad-bottom" style="min-height:250px">
+      Adsterra banner here
+    </div>
+  </section>
+
+  <footer class="reveal">Complete every task to unlock the call</footer>
+</div>
+
+<!-- ===== POPUP (shows after 3 tasks) ===== -->
+<div class="overlay" id="popup">
+  <div class="modal">
+    <h3>All tasks done 🎉</h3>
+    <p>Great job! Tap below to start the video call.</p>
+    <!-- ✏️ EDIT 5: VIDEO CALL LINK (change href, e.g. WhatsApp / Telegram / Meet link) -->
+    <a class="call" href="https://example.com/video-call" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 8v8H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h10zm1 2.5 5-3v9l-5-3v-3z"/></svg>
+      Start Video Call
+    </a><br>
+    <button class="close" id="closeBtn">Close</button>
+  </div>
+</div>
+
+<script>
+/* ============ SETTINGS ============ */
+// ✏️ EDIT 6: TASK LINKS — the page opens the matching link when a task is clicked
+const TASK_LINKS = [
+  "https://example.com/task-1",   // Task 1 link
+  "https://example.com/task-2",   // Task 2 link
+  "https://example.com/task-3"    // Task 3 link
+];
+const WAIT_SECONDS = 15;          // time the user must wait for a task to count as done
+/* ================================== */
+
+const tasks = [...document.querySelectorAll('.task')];
+let doneCount = 0;
+
+tasks.forEach((btn, i) => {
+  btn.addEventListener('click', () => {
+    btn.disabled = true;
+    window.open(TASK_LINKS[i], '_blank', 'noopener');   // redirect to the task link (new tab)
+    const bar = btn.querySelector('.bar');
+    const label = btn.querySelector('small');
+    const start = Date.now();
+    const timer = setInterval(() => {
+      const left = WAIT_SECONDS - (Date.now() - start) / 1000;
+      if (left > 0) {
+        bar.style.width = ((WAIT_SECONDS - left) / WAIT_SECONDS * 100) + '%';
+        label.textContent = 'Please wait… ' + Math.ceil(left) + 's';
+      } else {
+        clearInterval(timer);
+        bar.style.width = '100%';
+        btn.classList.add('done');
+        label.textContent = '✔ Task completed';
+        doneCount++;
+        if (tasks[i + 1]) tasks[i + 1].classList.add('visible');   // show next task
+        else setTimeout(() => document.getElementById('popup').classList.add('open'), 600);
+      }
+    }, 200);
+  });
+});
+
+document.getElementById('closeBtn').onclick = () => document.getElementById('popup').classList.remove('open');
+
+/* scroll effects: reveal, progress bar, parallax blobs */
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('show'); io.unobserve(e.target); } }), { threshold: .15 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+const blobs = document.querySelectorAll('.blob');
+addEventListener('scroll', () => {
+  const y = scrollY, h = document.documentElement.scrollHeight - innerHeight;
+  document.getElementById('progress').style.width = (h > 0 ? y / h * 100 : 0) + '%';
+  blobs.forEach((b, i) => b.style.transform = `translateY(${y * (0.08 + i * 0.06)}px)`);
+}, { passive: true });
+</script>
+</body>
+</html>
